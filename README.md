@@ -10,6 +10,12 @@ different modes or workflows.
 Default target: `192.168.4.28:9100` (override per-app; see `apps/*/config.py`
 or each script's `DEFAULT_CONFIG` dict).
 
+**Roadmap:** the longer-term goal is a Markdown-based WYSIWYG editor with
+accurate print preview for the Oki ML-421, plus a PDF-to-Markdown ingestion
+step. See [`docs/similar-projects-and-roadmap.md`](docs/similar-projects-and-roadmap.md)
+for a survey of existing open-source projects relevant to that direction and
+concrete next steps.
+
 ## Quick start
 
 ```
