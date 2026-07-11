@@ -1,14 +1,15 @@
 # network-okidata
 
-Tkinter tools for driving a network dot-matrix printer (an Okidata MICROLINE
-unit, reachable over Ethernet via a JetDirect-style raw socket on port 9100)
-by sending its raw escape-code command language directly. The printer can run
+Tools for driving a network dot-matrix printer (an Okidata MICROLINE unit,
+reachable over Ethernet via a JetDirect-style raw socket on port 9100) by
+sending its raw escape-code command language directly. The printer can run
 in one of three emulation modes — **IBM Proprinter III** (its default),
-**Okidata MICROLINE**, or **Epson FX** — and different tools here target
-different modes or workflows.
+**Okidata MICROLINE**, or **Epson FX**. Active development currently targets
+IBM Proprinter III only; see `archive2/` for the prior Okidata/multi-emulation/
+document-editor/calendar tools.
 
-Default target: `192.168.4.28:9100` (override per-app; see `apps/*/config.py`
-or each script's `DEFAULT_CONFIG` dict).
+Default target: `192.168.4.21:9100` (override in `apps/live_typewriter/config.py`,
+or via the IP/port fields in the app itself).
 
 **Roadmap:** the longer-term goal is a Markdown-based WYSIWYG editor with
 accurate print preview for the Oki ML-421, plus a PDF-to-Markdown ingestion
@@ -19,56 +20,48 @@ concrete next steps.
 ## Quick start
 
 ```
-start.bat
+setup.bat   # Windows: creates .venv, installs PySide6
+setup.sh    # Linux/macOS: same
+
+start.bat   # Windows: runs setup.bat if needed, then launches the app
+start.sh    # Linux/macOS: same
 ```
 
-This runs `main.py`, which launches the primary live-typing app
-(`apps/live_typewriter/okidata_app.py`) for the printer's native Okidata mode.
+This launches `apps/live_typewriter/ibm_typewriter.py`, a live-typing app for
+IBM Proprinter III — each keystroke (or each line, in Line-by-Line mode) is
+sent straight to the printer as you type.
+
+## `printer/` — the shared library
+
+- **`ibm_proprinter.py`** — the canonical IBM Proprinter III command table,
+  cross-checked against [`docs/printer-commands-ibm-proprinter.md`](docs/printer-commands-ibm-proprinter.md)
+  and against real hardware behavior. See
+  [`docs/ibm-proprinter-hardware-findings.md`](docs/ibm-proprinter-hardware-findings.md)
+  for what was found/fixed during testing.
+- **`client.py`** — `Printer`, a persistent-socket client class with a
+  method-call API (`.text()`, `.set(bold=True, cpi=12, ...)`, `.form_feed()`,
+  etc.) instead of per-app hand-rolled command dicts and inline sockets.
+  Takes an `on_log` callback instead of coupling to any particular GUI
+  widget, so it works headlessly (scripts, tests) or from any GUI.
 
 ## Apps
 
-### `apps/live_typewriter/` — type-and-it-prints-immediately
+### `apps/live_typewriter/ibm_typewriter.py`
 
-Each keystroke (or each line, depending on mode) is sent straight to the
-printer as you type — no separate "print" step.
+A PySide6 GUI: IP/port fields, a debug pane, Live vs Line-by-Line typing
+mode, CPI/font/spacing/script selectors, formatting toggles (bold, italic,
+enhanced, underline, overscore, proportional, double-width), manual command
+buttons, and a left/right margin + line-length display. Built entirely on
+`printer.client.Printer`.
 
-- **`okidata_app.py`** — Okidata MICROLINE mode. The main, most complete app;
-  this is what `main.py`/`start.bat` launches. Full controls for CPI,
-  print quality/speed, spacing, double-height/width, zero style, and more.
-- **`ibm_app.py`** — IBM Proprinter III mode (the printer's power-on default).
-  Same integrated-window design as `okidata_app.py`, with IBM-specific
-  commands and a persistent socket connection instead of one-shot sends.
-- **`multi_emulation_app.py`** — switches between all three emulations
-  (IBM / Okidata / Epson) from one dropdown, with a separate "Printer
-  Control" popup window for manual commands. Less polished per-mode
-  controls than the two apps above, but useful when you're not sure what
-  mode the printer is currently in.
-- **`config.py`** / **`printer.py`** — shared default config and the raw
-  `send_command()` socket helper used by `okidata_app.py`.
+## Diagnostics
 
-### `apps/document_editor/` — compose first, then print
-
-You type and format a whole document, optionally preview it, and only then
-send it to the printer — as opposed to the live-typewriter workflow above.
-
-- **`text_editor_app.py`** — a text editor with bold/italic/underline
-  buttons, a print preview, and multi-emulation support (IBM/Epson/Okidata).
-- **`page_layout_app.py`** — a paginated editor with draggable left/right/
-  top/bottom margins (snapping to 1/6" or 1/8"), showing an accurate visual
-  preview of CPI, double-wide text, and margins before printing.
-
-### `apps/calendar_printer/`
-
-- **`calendar_app.py`** — prints Day / Week (portrait) / Month (landscape)
-  calendar pages, with a Date Mode toggle to navigate by Month+Day or by
-  Week Number, plus configurable embellishments (bold/italic/underline/
-  double-width) per header.
-
-### `tools/`
-
-- **`printer_status_check.py`** — standalone script that pings the printer
-  with an ENQ (0x05) byte and reports whether it responds. Useful as a quick
-  "is the printer reachable" check before firing up one of the GUI apps.
+- **`printer_selftest.py`** — prints one labeled sample line per
+  toggle/CPI/font/spacing/script setting, so you can read the physical page
+  and see exactly what the printer actually honors. Stdlib-only, no venv
+  needed: `python3 printer_selftest.py [ip] [port]`.
+- **`printer_glyphs.py`** — prints the full standard-ASCII glyph set (10
+  CPI, narrow rows for letter paper) for each font. Same stdlib-only usage.
 
 ## Printer command reference
 
@@ -77,10 +70,21 @@ is a cleaned-up, deduplicated table of the full IBM Proprinter III escape-code
 set, merged from two independent transcriptions of the manual scans in
 [`docs/scans/`](docs/scans/).
 
-The Okidata MICROLINE and Epson FX command dictionaries are documented
-in-code (with comments) in each app's `*_COMMANDS` dict rather than as a
-separate reference doc — see `apps/live_typewriter/config.py` and
-`apps/document_editor/text_editor_app.py`.
+[`docs/ibm-proprinter-hardware-findings.md`](docs/ibm-proprinter-hardware-findings.md)
+documents where real hardware disagreed with that reference doc or with the
+prior per-app command dicts (wrong/guessed escape codes, the `ESC !` Master
+Select gotcha, the bare-LF-needs-CR gotcha, the unreliable extended
+character range, etc).
+
+## `archive2/`
+
+The `apps/` and `tools/` layout as of the last reorganization, before the
+`printer/` package + `ibm_typewriter.py` rewrite. Includes the Okidata
+MICROLINE app, the multi-emulation app, the document editor, the calendar
+printer, and the original `printer_status_check.py` — none of these were
+migrated to the new `printer/` library; they still use their own per-app
+command dicts and socket handling. Kept for reference/future migration, not
+actively maintained.
 
 ## `archive/`
 
