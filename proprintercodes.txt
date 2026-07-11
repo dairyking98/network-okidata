@@ -1,0 +1,86 @@
+| Name / Description                   | ASCII Code | Decimal Code | Hex Code |
+|--------------------------------------|------------|--------------|----------|
+| Beeper                               | BEL        | 7            | 07       |
+| Backspace                            | BS         | 8            | 08       |
+| Cancel Data                          | CAN        | 24           | 18       |
+| Carriage Return                      | CR         | 13           | 0D       |
+| Select Printer                       | DC1        | 17           | 11       |
+| 10 Characters-per-Inch Print         | DC2        | 18           | 12       |
+| Deselect Printer                     | DC3        | 19           | 13       |
+| Cancel Double-Wide Printing by Line  | DC4        | 20           | 14       |
+| Name / Description           | ASCII Code         | Decimal Code | Hex Code | Additional Information                                |
+|------------------------------|--------------------|--------------|----------|-------------------------------------------------------|
+| Form Feed                    | FF                 | 12           | 0C       |                                                       |
+| Horizontal Tab               | HT                 | 9            | 09       |                                                       |
+| Line Feed                    | LF                 | 10           | 0A       |                                                       |
+| Null                         | NUL                | 0            | 00       |                                                       |
+| Condensed Printing           | SI                 | 15           | 0F       |                                                       |
+| Double-Wide Printing by Line | SO                 | 14           | 0E       |                                                       |
+| Space                        | SP                 | 32           | 20       |                                                       |
+| Vertical Tab                 | VT                 | 11           | 0B       |                                                       |
+| Set Text Line Spacing        | ESC A n            | 27 65        | 1B 41    | n = n/72 in                                           |
+| Set Vertical Tabs            | ESC B n₁ n₂ ... 0  | 27 66        | 1B 42    | n’s are tab stop positions between 1 and 255          |
+| Name / Description         | ASCII Code             | Decimal Code | Hex Code | Additional Information                                                                 |
+|----------------------------|------------------------|--------------|----------|------------------------------------------------------------------------------------------|
+| Set Form Length in Lines or Inches | ESC C n m      | 27 67        | 1B 43    | Lines: ESC C n   Inches: ESC C 0 m                                                      |
+| Set Horizontal Tabs        | ESC D n₁ n₂ ... n₂₈ 0  | 27 68        | 1B 44    | n’s are tab stop positions. Values for n begin with 1.The maximum value for n depends on the current patch.|
+| Emphasized Printing        | ESC E                  | 27 69        | 1B 45    |                                                                                          |
+| Cancel Emphasized Printing | ESC F                  | 27 70        | 1B 46    |                                                                                          |
+| Double-Strike Printing     | ESC G                  | 27 71        | 1B 47    |                                                                                          |
+| Cancel Double-Strike Printing | ESC H               | 27 72        | 1B 48    |                                                                                          |
+| Name / Description     | ASCII Code | Decimal Code | Hex Code | Additional Information                                                                                                                                             |
+|------------------------|------------|--------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Select Print Mode      | ESC I n    | 27 73        | 1B 49    | 00=DP Resident, 01=Fastfont (12 CPI) Resident, 02=NLQ Resident, 03=NLQ II Resident, 04=DP Download, 05=Fastfont (12 CPI) Download, 06=NLQ Download, 07=NLQ II Download, 0B=Alternate NLQ II (Italic): Resident, 0F=Alternate NLQ II: Download |
+| Name / Description                     | ASCII Code               | Decimal Code | Hex Code | Additional Information                                                                                                     |
+|----------------------------------------|--------------------------|--------------|----------|----------------------------------------------------------------------------------------------------------------------------|
+| Graphics Variable Line Spacing         | ESC J n                  | 27 74        | 1B 4A    | n is between 0–255. Use multiples of 3 to move exactly n/216 inch.                                                         |
+| Normal-Density Bit-Image Graphics      | ESC K n₁ n₂ v₁ v₂ ... v₄₈₀ | 27 75     | 1B 4B    | Total bit-image bytes = n₁ + n₂ * 256; Bit-Image Data = v₁,v₂,...v₄₈₀                                                     |
+| Dual-Density Bit-Image Graphics        | ESC L n₁ n₂ v₁ v₂ ... v₉₆₀ | 27 76     | 1B 4C    | Total bit-image bytes = n₁ + n₂ * 256; Bit-Image Data = v₁,v₂,...v₉₆₀                                                     |
+| Set Automatic Perforation Skip         | ESC N n                  | 27 78        | 1B 4E    | n = number of lines                                                                                                        |
+| Cancel Automatic Perforation Skip      | ESC O                    | 27 79        | 1B 4F    |                                                                                                                            |
+| Proportional Space Mode                | ESC P n                  | 27 80        | 1B 50    | n = 0 cancels; n = 1 activates. Not available on the Proprinter.                                                           |
+| Deselect Printer                       | ESC Q n                  | 27 81        | 1B 51    | Proprinter X24 and X24E n = 36 (X’24’); XL24 and XL24E n = 35 (X’23’); Proprinter II, and III n = 3; XL, II XL, and III XL n = 22 (X’16’) |
+| Name / Description                          | ASCII Code             | Decimal Code | Hex Code | Additional Information                                                                 |
+|---------------------------------------------|------------------------|--------------|----------|------------------------------------------------------------------------------------------|
+| Set All Tabs to Power On Settings           | ESC R                  | 27 82        | 1B 52    |                                                                                          |
+| Subscript or Superscript Printing           | ESC S n                | 27 83        | 1B 53    | n = 0 superscript; n = 1 subscript                                                       |
+| Cancel Subscript or Superscript             | ESC T                  | 27 84        | 1B 54    |                                                                                          |
+| Print in One Direction                      | ESC U n                | 27 85        | 1B 55    | n = 0 bidirectional; n = 1 left-to-right                                                 |
+| Continuous Double-Wide Printing             | ESC W n                | 27 87        | 1B 57    | n = 0 ends; n = 1 begins                                                                 |
+| Set Horizontal Margins                      | ESC X n m              | 27 88        | 1B 58    | n = left margin; m = right margin. Not available on the Proprinter.                     |
+| Dual-Density Bit-Image Graphics (normal speed) | ESC Y n₁ n₂ v₁ v₂ ... v₉₆₀ | 27 89 | 1B 59    | Total bit-image bytes = n₁ + (n₂ * 256); Bit-Image Data = v₁,v₂,...v₉₆₀                |
+| High-Density Bit-Image Graphics             | ESC Z n₁ n₂ v₁ v₂ ... v₁₉₂₀ | 27 90 | 1B 5A    | Total bit-image bytes = n₁ + (n₂ * 256); Bit-Image Data = v₁,v₂,...v₁₉₂₀               |
+| Name / Description             | ASCII Code | Decimal Code | Hex Code | Additional Information                                  |
+|--------------------------------|------------|--------------|----------|---------------------------------------------------------|
+| 1/8-Inch Line Spacing          | ESC 0      | 27 48        | 1B 30    |                                                         |
+| 7/72-Inch Line Spacing         | ESC 1      | 27 49        | 1B 31    |                                                         |
+| Start Text Line Spacing        | ESC 2      | 27 50        | 1B 32    |                                                         |
+| Graphics Line Spacing          | ESC 3 n    | 27 51        | 1B 33    | n = n/216 inch, n is between 0 and 255                  |
+| Set Top of Form                | ESC 4      | 27 52        | 1B 34    |                                                         |
+| Automatic Line Feed            | ESC 5 n    | 27 53        | 1B 35    | n = 0 cancels; n = 1 begins                             |
+| Select Character Set 2         | ESC 6      | 27 54        | 1B 36    |                                                         |
+| Select Character Set 1         | ESC 7      | 27 55        | 1B 37    |                                                         |
+| Continuous Overscore           | ESC _ n    | 27 95        | 1B 5F    | n = 0 cancels; n = 1 begins                             |
+| Continuous Underscore          | ESC ` n    | 27 96        | 1B 60    | n = 0 cancels; n = 1 begins                             |
+| Name / Description                          | ASCII Code                         | Decimal Code | Hex Code   | Additional Information                                                                                   |
+|---------------------------------------------|------------------------------------|--------------|------------|----------------------------------------------------------------------------------------------------------|
+| 12-Characters-per-Inch Printing             | ESC :                              | 27 58        | 1B 3A      |                                                                                                          |
+| Print Single Character From All Characters Chart | ESC ^                          | 27 94        | 1B 5E      |                                                                                                          |
+| Print Continuously From All Characters Chart | ESC \ n₁ n₂                      | 27 92        | 1B 5C      | Total characters n = n₁ + (n₂ * 256)                                                                     |
+| Set Presentation Highlight                  | ESC l @ n₁ n₂ n₃ n₄ n₅            | 27 91 64     | 1B 5B 40   |                                                                                                          |
+| Set Initial Condition                       | ESC l K n₁ n₂ init id parm1 parm2 | 27 91 75     | 1B 5B 4B   | Not available on the Proprinter, Proprinter XL, II, II XL, X24, or XL24                                  |
+| Character Font Image Download               | ESC =                              | 27 61        | 1B 3D      |                                                                                                          |
+| Stop Printing                               | ESC j                              | 27 106       | 1B 6A      | Not available on the Proprinter, Proprinter II, XL, II XL, III, or III XL                                |
+| Set Code Page                               | ESC l T countlow counthigh 0 0 cpidhigh cpidlow | 27 91 84 | 1B 5B 54   | Not available on the Proprinter, Proprinter II, XL, II XL, III, III XL, X24, or XL24                     |
+| Relative Move Inline Forward (n/120 in)     | ESC d n₁ n₂                        | 27 100       | 1B 64      | Total characters n = n₁ + (n₂ * 256)                                                                     |
+| Name / Description                   | ASCII Code                         | Decimal Code     | Hex Code   | Additional Information                                                                                         |
+|--------------------------------------|------------------------------------|------------------|------------|------------------------------------------------------------------------------------------------------------------|
+| Set Vertical Units                   | ESC \                              | 27 91 92         | 1B 5B 5C   | Syntax: ESC [\ countlow counthigh T-Units-Low T-Units-High G-Units-Low G-Units-High. Not on Proprinter models. |
+| High-Resolution Graphics             | ESC [ g                            | 27 91 103        | 1B 5B 67   | Not available on the Proprinter, Proprinter II, XL, II XL, III, or III XL                                       |
+| Graphics Line Spacing (AGM)         | ESC 3 n                            | 27 51            | 1B 33      | n = n/180 in. Not on the Proprinter, Proprinter II, II XL, III, or III XL                                       |
+| Set Text Line Spacing (AGM)         | ESC A n                            | 27 65            | 1B 41      | n = n/60 in. Not on the Proprinter, Proprinter II, XL, II XL, III, or III XL                                    |
+| Graphics Variable Line Spacing (AGM)| ESC J n                            | 27 74            | 1B 4A      | n = n/180 in. Not on the Proprinter, Proprinter II, XL, II XL, III, or III XL                                   |
+| Select Graphic Mode (AGM)           | ESC *                              | 27 42            | 1B 2A      | * Mode countlow counthigh Bit-Image Data. Not on the Proprinter, Proprinter II, XL, II XL, III, or III XL       |
+
+
+

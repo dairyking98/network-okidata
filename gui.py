@@ -1,106 +1,9 @@
-"""
-Live Keystroke Printer – Okidata Only with Integrated Controls, Debug Panel, Mode Selection,
-Line Length Display, and Additional Printing Options
-------------------------------------------------------------------------------------------------
-
-This program creates a single-window text editor that sends keystrokes to an Okidata printer.
-It supports two printing modes:
-  • Live mode: Each keystroke is sent immediately.
-  • Line-by-Line mode (default): Text is printed only when Return is pressed.
-    In Line-by-Line mode, when Return is pressed, the sequence is:
-      - Carriage Return (CR)
-      - Line Feed (LF)
-      - A number of Horizontal Tabs (HT) based on the Left Margin spinbox value
-      - The entire current line’s text as one command
-      - A newline is inserted in the text widget.
-Persistent formatting toggles (Italic, Emphasized, Underline Printing) send their command once.
-Other integrated controls (character sets, CPI, spacing, print quality, speed, double height, proportional, skip over perforation) behave as before.
-**Important:** In the CPI section, a “Double Wide” checkbox is provided. When checked, after the current CPI command is executed, the Double Wide code (ASCII 31, i.e. b"\x1F") is executed; when unchecked, the current CPI code is re-sent.
-The effective CPI used for line-length calculations is halved when Double Wide is enabled.
-The displayed line length (in inches) is computed as:
-      (8 × left_margin_spinbox_value / numeric_CPI) + (char_count / effective_CPI)
-where numeric_CPI is parsed from the CPI radio button and effective_CPI is that value halved if Double Wide is enabled.
-A new “Zero” section provides radio buttons for “Slashed Zero” and “Unslashed Zero.” When a zero option is selected, its corresponding command is immediately sent.
-The Print Quality section now includes a “Utility” option.
-A new “Shift In/Out” checkbox in the Manual Commands section sends a Shift In (ASCII 15) or Shift Out (ASCII 14) command when toggled.
-Additional Printing Options (Unidirectional Printing and Enhanced Printing) are in their own section.
-Manual command buttons are provided for Line Feed, Carriage Return, Form Feed, Horizontal Tab, Backspace, Vertical Tab, Reverse Line Feed, and Reset (Clear Print Buffer).
-Debug Mode is on by default, and all command bytes are logged (in decimal) in the integrated debug panel.
-"""
-
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
+from config import DEFAULT_CONFIG, OKIDATA_COMMANDS, FORMAT_COMMANDS
+from printer import send_command
 import socket
 
-# ------------------ Default Configuration ------------------
-DEFAULT_CONFIG = {
-    "PRINTER_IP": "192.168.4.28",
-    "PRINTER_PORT": 9100,
-    "DEFAULT_EMULATION": "Okidata",
-    "DEFAULT_CPI": "10 cpi",
-    "DEFAULT_SKIP_PERFORATION": 0,
-    "DEFAULT_LEFT_MARGIN": 0
-}
-
-# ------------------ Okidata MICROLINE Command Dictionary ------------------
-OKIDATA_COMMANDS = {
-    "Backspace": b"\x08",
-    "Carriage Return": b"\x0D",
-    "Select 10 cpi": b"\x1E",
-    "Select 12 cpi": b"\x1C",
-    "Select 15 cpi": b"\x1B\x67",
-    "Select 17.1 cpi": b"\x1D",
-    "Select 20 cpi": b"\x1B\x23\x33",
-    "Standard Character Set": b"\x1B\x21\x30",
-    "Block Graphic Set": b"\x1B\x21\x31",
-    "Publisher Set": b"\x1B\x21\x5A",
-    "Line Graphics Set": b"\x1B\x21\x32",
-    "Select Utility": b"\x1B\x30",
-    "Slashed Zero": b"\x1B\x21\x40",
-    "Unslashed Zero": b"\x1B\x21\x41",
-    "Double Height On": b"\x1B\x1F\x31",
-    "Double Height Off": b"\x1B\x1F\x30",
-    "Double Width On": b"\x1F",  # Double Wide command (ASCII 31)
-    "Double Width Off": b"\x1B\x21\x30",
-    "Emphasized Printing On": b"\x1B\x54",
-    "Emphasized Printing Off": b"\x1B\x49",
-    "Enhanced Printing On": b"\x1B\x48",
-    "Enhanced Printing Off": b"\x1B\x49",
-    "Underline Printing On": b"\x1B\x2D\x01",
-    "Underline Printing Off": b"\x1B\x2D\x00",
-    "Unidirectional Printing On": b"\x1B\x2D\x02",
-    "Unidirectional Printing Off": b"\x1B\x2D\x00",
-    "Form Feed": b"\x0C",
-    "Horizontal Tab": b"\x09",
-    "Vertical Tab": b"\x0B",
-    "Line Feed": b"\x0A",
-    "Line Feed w/o CR": b"\x1B\x12",
-    "Reverse Line Feed": b"\x1B\x0A",
-    "Set Spacing to 1/6\"": b"\x1B\x36",
-    "Set Spacing to 1/8\"": b"\x1B\x38",
-    "Set Spacing to n/144": lambda n: b"\x1B\x25\x39" + bytes([n]),
-    "Print Quality Select HSD/SSD": b"\x1B\x23\x30",
-    "Select NLQ Courier": b"\x1B\x31",
-    "Select NLQ Gothic": b"\x1B\x33",
-    "Print Speed Set to Full": b"\x1B\x3E",
-    "Print Speed Set to Half": b"\x1B\x3C",
-    "Proportional Printing On": b"\x1B\x59",
-    "Proportional Printing Off": b"\x1B\x5A",
-    "Reset (Clear Print Buffer)": b"\x18",
-    "Skip Over Perforation": lambda n: b"\x1B\x25\x53\x30" if n == 0 else b"\x1B\x47" + bytes([n]) + bytes([n]),
-    "Shift In": b"\x0F",
-    "Shift Out": b"\x0E"
-}
-
-# ------------------ Integrated Formatting Commands ------------------
-FORMAT_COMMANDS = {
-    "Okidata": {
-        "italic": (b"\x1B\x21\x2F", b"\x1B\x21\x2A"),
-        "emphasized": (b"\x1B\x54", b"\x1B\x49"),
-    }
-}
-
-# ------------------ Main Application ------------------
 class LiveKeystrokeEditor:
     def __init__(self, master):
         self.master = master
@@ -320,29 +223,16 @@ class LiveKeystrokeEditor:
             command = OKIDATA_COMMANDS.get("Shift Out", b"")
             tag = "[Shift Out]"
         if command:
-            self.send_live_command(command)
+            self.send_live_command(command, tag)
     
     def send_command_immediately(self, command_bytes, tag=""):
-        dec_str = " ".join(str(b) for b in command_bytes)
-        if self.debug_mode.get():
-            self.debug_text.config(state=tk.NORMAL)
-            self.debug_text.insert(tk.END, f"{tag} {dec_str}\n")
-            self.debug_text.config(state=tk.DISABLED)
-            self.debug_text.see(tk.END)
         printer_ip = self.ip_entry.get()
         try:
             printer_port = int(self.port_entry.get())
         except ValueError:
             messagebox.showerror("Error", "Invalid port number.")
             return
-        try:
-            with socket.create_connection((printer_ip, printer_port), timeout=5) as s:
-                s.sendall(command_bytes)
-        except Exception as e:
-            self.debug_text.config(state=tk.NORMAL)
-            self.debug_text.insert(tk.END, f"{tag} Error: {e}\n")
-            self.debug_text.config(state=tk.DISABLED)
-            self.debug_text.see(tk.END)
+        send_command(command_bytes, printer_ip, printer_port, self.debug_mode.get(), self.debug_text, tag)
     
     def send_all_defaults(self):
         self.restore_defaults()
@@ -374,11 +264,7 @@ class LiveKeystrokeEditor:
             self.debug_text.insert(tk.END, f"[Restore Defaults] {dec_str}\n")
             self.debug_text.config(state=tk.DISABLED)
             self.debug_text.see(tk.END)
-        try:
-            with socket.create_connection((printer_ip, printer_port), timeout=5) as s:
-                s.sendall(full_cmd)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to send default commands: {e}")
+        send_command(full_cmd, printer_ip, printer_port, self.debug_mode.get(), self.debug_text, "[Restore Defaults]")
     
     def apply_font(self):
         font = self.font_var.get()
@@ -521,27 +407,14 @@ class LiveKeystrokeEditor:
         if command:
             self.send_command_immediately(command, tag)
     
-    def send_live_command(self, command_bytes):
-        dec_str = " ".join(str(b) for b in command_bytes)
-        if self.debug_mode.get():
-            self.debug_text.config(state=tk.NORMAL)
-            self.debug_text.insert(tk.END, f"[Live Keystroke] {dec_str}\n")
-            self.debug_text.config(state=tk.DISABLED)
-            self.debug_text.see(tk.END)
+    def send_live_command(self, command_bytes, tag="[Live Keystroke]"):
         printer_ip = self.ip_entry.get()
         try:
             printer_port = int(self.port_entry.get())
         except ValueError:
             messagebox.showerror("Error", "Invalid port number.")
             return
-        try:
-            with socket.create_connection((printer_ip, printer_port), timeout=5) as s:
-                s.sendall(command_bytes)
-        except Exception as e:
-            self.debug_text.config(state=tk.NORMAL)
-            self.debug_text.insert(tk.END, f"[Live Keystroke] Error: {e}\n")
-            self.debug_text.config(state=tk.DISABLED)
-            self.debug_text.see(tk.END)
+        send_command(command_bytes, printer_ip, printer_port, self.debug_mode.get(), self.debug_text, tag)
     
     def handle_key(self, event):
         if event.keysym == "Return":
@@ -615,11 +488,3 @@ class LiveKeystrokeEditor:
         else:
             color = "red"
         self.line_length_display.config(bg=color)
-
-def main():
-    root = tk.Tk()
-    app = LiveKeystrokeEditor(root)
-    root.mainloop()
-
-if __name__ == '__main__':
-    main()
