@@ -43,6 +43,12 @@ sent straight to the printer as you type.
   etc.) instead of per-app hand-rolled command dicts and inline sockets.
   Takes an `on_log` callback instead of coupling to any particular GUI
   widget, so it works headlessly (scripts, tests) or from any GUI.
+- **`image.py`** — `print_image()`, bit-image graphics (`ESC K`/`ESC L`)
+  ported from `oki-ctrl/ctrlimg.py`: converts any image to 1-bit via Pillow
+  and prints it in 8-dot stripes. The only module in `printer/` with a
+  dependency beyond stdlib (Pillow); kept separate so `client.py` and the
+  stdlib-only diagnostic scripts don't need it. Also has
+  `make_test_pattern()`, a small synthetic image for fast test prints.
 
 ## Apps
 
@@ -51,8 +57,10 @@ sent straight to the printer as you type.
 A PySide6 GUI: IP/port fields, a debug pane, Live vs Line-by-Line typing
 mode, CPI/font/spacing/script selectors, formatting toggles (bold, italic,
 enhanced, underline, overscore, proportional, double-width), manual command
-buttons, and a left/right margin + line-length display. Built entirely on
-`printer.client.Printer`.
+buttons, a left/right margin + line-length display, and a live WYSIWYG
+preview pane (a character-cell canvas that overlays overtyped glyphs like
+real impact-printer overstrike, and tracks line-spacing changes per row).
+Built entirely on `printer.client.Printer`.
 
 ## Diagnostics
 
@@ -62,6 +70,11 @@ buttons, and a left/right margin + line-length display. Built entirely on
   needed: `python3 printer_selftest.py [ip] [port]`.
 - **`printer_glyphs.py`** — prints the full standard-ASCII glyph set (10
   CPI, narrow rows for letter paper) for each font. Same stdlib-only usage.
+- **`printer_print_image.py`** — prints an image via bit-image graphics:
+  `python3 printer_print_image.py [image_path] [ip] [port] [mode] [form_feed]`.
+  Omit `image_path` (or pass `-`) to print a small built-in test pattern
+  instead of a real file. Requires Pillow (`pip install Pillow`, or use the
+  venv from `setup.sh`/`setup.bat`).
 
 ## Printer command reference
 
@@ -75,6 +88,27 @@ documents where real hardware disagreed with that reference doc or with the
 prior per-app command dicts (wrong/guessed escape codes, the `ESC !` Master
 Select gotcha, the bare-LF-needs-CR gotcha, the unreliable extended
 character range, etc).
+
+## `oki-ctrl/`
+
+Recovered from a sibling directory outside this repo (not part of the
+original reorganization). A mix of:
+
+- `ctrlimg.py` — the from-scratch Tkinter tool `printer/image.py` was
+  ported from (image → `ESC K`/`ESC L` bit-image graphics).
+- `create.py`/`create.txt` — a moiré test-pattern bitmap generator, plus
+  sample bitmaps (`Untitled.bmp`, `moire_pattern.bmp`) used to test
+  `ctrlimg.py` and now `printer_print_image.py`.
+- `ctrl.py`/`manualcommand.py` — two near-duplicate generic raw-command
+  Tkinter senders (type `ESC K 1 0 255 CR LF`-style tokens, or click preset
+  buttons covering the full IBM Proprinter command set). Overlaps with
+  `printer.client.Printer` + `ibm_typewriter.py`'s manual command buttons;
+  not migrated.
+- `app.js`/`package.json`/`startgui.bat`/`startserver.bat` — a Node/Express
+  proxy forwarding binary POSTs to the printer's raw socket, meant to pair
+  with a browser frontend that wasn't actually recovered (the `index.html`
+  at the source location was something unrelated). Not functional as a
+  complete unit currently.
 
 ## `archive2/`
 

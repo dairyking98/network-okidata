@@ -2,7 +2,8 @@
 
 Empirical findings from testing `printer/client.py` against the real printer
 (an Okidata MICROLINE unit at `192.168.4.21:9100`, running in IBM Proprinter
-III emulation) using `printer_selftest.py` and `printer_glyphs.py`. These
+III emulation) using `printer_selftest.py`, `printer_glyphs.py`, and
+`printer_print_image.py`. These
 supplement [`printer-commands-ibm-proprinter.md`](printer-commands-ibm-proprinter.md)
 (the vendor manual transcription) with what this specific printer actually
 does, which in a few cases disagrees with either the vendor doc or the old
@@ -123,11 +124,27 @@ The vendor manual explicitly notes `ESC P n` (Proportional Space Mode) is
 completeness (other IBM printers support it) but expect it to be a no-op on
 a real Proprinter III.
 
+## Bit-image graphics (`ESC K`/`ESC L`) need paced sends, not back-to-back
+
+`printer/image.py`'s `print_image()` sends one `ESC K`/`ESC L` command per
+8-dot-tall stripe. Sending every stripe back-to-back with no delay overran
+the printer's receive buffer partway through a larger image (`460x272`,
+34 stripes): it printed roughly 80%, then the printer appeared to restart
+mid-job before completing correctly on a second pass. `oki-ctrl/ctrlimg.py`
+(the tool this was ported from) already paced each stripe with a
+`time.sleep(0.05)` — `print_image()` now does the same
+(`_STRIPE_DELAY_SECONDS`). Worth re-testing with a still-larger image if
+this becomes a bottleneck; 0.05s/stripe hasn't been pushed further than the
+one 34-stripe test yet.
+
 ## Reproducing these findings
 
 ```
-python3 printer_selftest.py [ip] [port]   # one labeled sample per toggle/CPI/font/spacing/script
-python3 printer_glyphs.py [ip] [port]     # full ASCII glyph dump per font, 10 CPI
+python3 printer_selftest.py [ip] [port]                      # one labeled sample per toggle/CPI/font/spacing/script
+python3 printer_glyphs.py [ip] [port]                        # full ASCII glyph dump per font, 10 CPI
+python3 printer_print_image.py [image_path] [ip] [port]      # bit-image graphics; omit image_path for a small built-in test pattern
 ```
 
-Neither script needs the venv/PySide6 — `printer.client` is stdlib-only.
+`printer_selftest.py`/`printer_glyphs.py` need no venv/PySide6 --
+`printer.client` is stdlib-only. `printer_print_image.py` needs Pillow
+(`pip install Pillow`, or the venv from `setup.sh`/`setup.bat`).
