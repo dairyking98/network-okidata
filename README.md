@@ -17,6 +17,9 @@ step. See [`docs/similar-projects-and-roadmap.md`](docs/similar-projects-and-roa
 for a survey of existing open-source projects relevant to that direction and
 concrete next steps.
 
+**Status:** paused as of 2026-07-11 -- see [`docs/status.md`](docs/status.md)
+for the current state, a not-yet-re-verified fix, and where to pick back up.
+
 ## Quick start
 
 ```

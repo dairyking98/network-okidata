@@ -137,6 +137,38 @@ mid-job before completing correctly on a second pass. `oki-ctrl/ctrlimg.py`
 this becomes a bottleneck; 0.05s/stripe hasn't been pushed further than the
 one 34-stripe test yet.
 
+**Not yet re-verified on hardware**: this fix was applied but not re-tested
+end-to-end (printer was too loud to run late at night). Next session should
+re-run `printer_print_image.py` and confirm a full image now completes in
+one clean pass before trusting this fix.
+
+## Future experiment: multi-pass offset printing for higher effective resolution
+
+Hypothesis (not yet implemented, logged for later): printer drivers doing
+PDF/image printing on 9-pin dot matrix printers commonly do a second
+overlapping pass, offset by a fraction of a pin-pitch in both axes, to fill
+the visible gaps between physical pin dots at native resolution and get a
+denser/smoother result. This is the same mechanism behind NLQ (near-letter-
+quality) modes generally, and there's no reason it couldn't be done
+manually via escape codes rather than only through a driver:
+
+- **`ESC J n`** (Graphics Variable Line Spacing, `1B 4A`, `n/216"`) — a
+  one-shot fine vertical advance, independent of the regular line-spacing
+  setting. Use this for a sub-stripe-height vertical offset before a
+  second pass.
+- **`ESC d n₁ n₂`** (Relative Move Inline Forward, `1B 64`, `n/120"`) — a
+  fine horizontal nudge, for the equivalent sideways offset.
+
+Shape of the experiment: print a stripe once via `ESC K`/`ESC L` (as
+`printer/image.py` already does), `ESC J n` (and/or `ESC d n1 n2`) for a
+small offset, then print the stripe again -- either the identical data
+(simpler, will blur/darken) or a complementary/interleaved bit pattern
+(sharper fill, more math) -- before advancing normally to the next stripe.
+
+Cost: roughly doubles the data sent and the print time per image. Neither
+approach (identical-data reprint vs. interleaved) has been tried on
+hardware yet -- this is a design sketch, not a confirmed finding.
+
 ## Reproducing these findings
 
 ```
