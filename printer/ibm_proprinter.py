@@ -56,6 +56,10 @@ COMMANDS = {
     "Line Spacing 7/72": b"\x1B\x31",               # ESC 1 (27 49)
     "Set Spacing to n/72": lambda n: b"\x1B\x41" + bytes([n]),      # ESC A n (27 65 n)
     "Store Spacing Set": b"\x1B\x32",              # ESC 2 (27 50)
+    # Confirmed on real hardware: "Set Spacing to n/144" (ESC % 9 n) has no
+    # effect on this printer -- "Set Spacing to n/216" (ESC 3 n) does work.
+    # Kept in the table (matches the vendor doc), but the app disables the
+    # n/144 radio button since selecting it silently does nothing here.
     "Set Spacing to n/144": lambda n: b"\x1B\x25\x39" + bytes([n]), # ESC % 9 n (27 37 57 n)
     "Set Spacing to n/216": lambda n: b"\x1B\x33" + bytes([n]),     # ESC 3 n (27 51 n)
     "Overscore On": b"\x1B\x5F\x31",               # ESC _ 1 (27 95 49)

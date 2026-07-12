@@ -12,9 +12,9 @@ per-app command dicts in `archive2/`.
 
 Bold (Emphasized, `ESC E`/`ESC F`), Enhanced/double-strike (`ESC G`/`ESC H`),
 Underline (`ESC - n`, see below), Overscore (`ESC _ n`), Double Width
-(`ESC W n`), all 4 CPI settings, IBM Set I/II switching, all line-spacing
-modes (1/8, 7/72, n/144, n/216), and superscript/subscript/normal
-(`ESC S n` / `ESC T`) all print correctly and toggle cleanly on and off.
+(`ESC W n`), all 4 CPI settings, IBM Set I/II switching, line spacing 1/8,
+7/72, and n/216, and superscript/subscript/normal (`ESC S n` / `ESC T`) all
+print correctly and toggle cleanly on and off.
 
 ## Bugs found in the old code, now fixed in `printer/ibm_proprinter.py`
 
@@ -33,6 +33,25 @@ modes (1/8, 7/72, n/144, n/216), and superscript/subscript/normal
   `ESC S n` (`0x1B 0x53`, `n=0` superscript / `n=1` subscript), cancelled by
   `ESC T` (`0x1B 0x54`) — a single cancel command, not separate per-mode
   off commands.
+
+## `n/144` line spacing does not work; `n/216` does
+
+`Set Spacing to n/144` (`ESC % 9 n`) has no visible effect on this printer,
+confirmed via `printer_selftest.py`. `Set Spacing to n/216` (`ESC 3 n`) does
+work. Both are in the vendor manual with no "not available" caveat (unlike
+Proportional Spacing), so this is an emulation gap specific to this printer,
+not a documented limitation. `ibm_typewriter.py` disables the `n/144` radio
+button (greyed out, with a tooltip) rather than silently doing nothing when
+selected.
+
+## Condensed print measures ~17 CPI, not 10
+
+The app's line-length calculation and preview font sizing initially assumed
+Condensed print was still 10 characters per inch (just visually condensed).
+Measured on real hardware, Condensed is closer to **17 CPI** — consistent
+with the well-known industry convention that condensed mode is roughly
+1.7x the base pitch (10 CPI x 1.71 ≈ 17.1). `ibm_typewriter.py`'s
+`update_line_length_display` now uses 17.0 for Condensed instead of 10.0.
 
 ## Bare LF does not carriage-return
 

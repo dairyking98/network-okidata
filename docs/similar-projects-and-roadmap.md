@@ -179,6 +179,32 @@ standard, minimal approach:
    from step 2 for the preview, and through `printer.py`'s socket code for
    the real send — that's the "preview + adjust, then print" workflow.
 
+## Addendum (2026-07-11, second pass)
+
+- **[nzeemin/escparser](https://github.com/nzeemin/escparser)** — a C
+  command-line ESC/P interpreter: takes a raw escape-code log file and
+  renders it to PostScript/SVG/PDF, using an actual dot-matrix ROM font
+  bitmap (tuned to a Robotron CM 6329.01M) rather than approximating with a
+  system font. Not adopted directly -- it's C, batch/offline (log file in,
+  document out, no live preview), and tuned to a different printer's exact
+  command set than the IBM Proprinter III quirks confirmed in
+  [`ibm-proprinter-hardware-findings.md`](ibm-proprinter-hardware-findings.md).
+  Kept as the reference for when the real byte-stream interpreter (item 2
+  above) gets built: its rendered sample was visually recognized as close to
+  this project's actual dot-matrix output, so a real bitmap font (rather
+  than a system TTF with bold/italic faked) is worth prioritizing then,
+  the same way `EPHEX-80` was already flagged for its interpret-and-render
+  architecture.
+- In the meantime, a **live preview pane inside `ibm_typewriter.py`** was
+  built as a lighter first step: it mirrors the app's own formatting state
+  (the same checkboxes/radios driving `Printer.set()` calls) into a
+  `QTextEdit` as text is typed, using Qt's native bold/italic/underline/
+  overline/superscript-subscript/font-stretch support. This is not the
+  "interpret the raw byte stream" architecture item 2 calls for -- it can't
+  be reused by a future non-GUI pipeline (e.g. Markdown -> preview) -- but
+  it's a fast, immediately useful WYSIWYG check for this one app, and can't
+  drift from what's sent since it reads the same state.
+
 ## Sources
 
 - [python-escp](https://github.com/yackx/python-escp)
@@ -193,3 +219,4 @@ standard, minimal approach:
 - [p910nd](https://github.com/kenyapcomau/p910nd)
 - [WeasyPrint](https://github.com/Kozea/WeasyPrint)
 - [ReportLab](https://www.reportlab.com/)
+- [nzeemin/escparser](https://github.com/nzeemin/escparser)
